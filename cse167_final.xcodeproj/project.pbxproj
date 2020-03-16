@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6E2DDF68241E7766007A72CF /* skydomeShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EB1AFBD241E5F8F00F58686 /* skydomeShader.vert */; };
+		6E2DDF69241E7766007A72CF /* skydomeShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EB1AFBE241E628700F58686 /* skydomeShader.frag */; };
 		6EB1AF8524178B0A00F58686 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6EB1AF8424178B0A00F58686 /* OpenGL.framework */; };
 		6EB1AF8724178B1200F58686 /* libglfw.3.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6EB1AF8624178B1200F58686 /* libglfw.3.3.dylib */; };
 		6EB1AFA12417A80900F58686 /* shader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EB1AF952417A80800F58686 /* shader.cpp */; };
@@ -21,6 +23,7 @@
 		6EB1AFB2241E1ADA00F58686 /* Skybox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EB1AFB1241E1ADA00F58686 /* Skybox.cpp */; };
 		6EB1AFB5241E208400F58686 /* skyboxShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EB1AFB3241E1B3600F58686 /* skyboxShader.frag */; };
 		6EB1AFB6241E208400F58686 /* skyboxShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EB1AFB4241E1B3600F58686 /* skyboxShader.vert */; };
+		6EB1AFBC241E5D2500F58686 /* Skydome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EB1AFBA241E5D2500F58686 /* Skydome.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +33,8 @@
 			dstPath = shaders;
 			dstSubfolderSpec = 16;
 			files = (
+				6E2DDF68241E7766007A72CF /* skydomeShader.vert in CopyFiles */,
+				6E2DDF69241E7766007A72CF /* skydomeShader.frag in CopyFiles */,
 				6EB1AFB5241E208400F58686 /* skyboxShader.frag in CopyFiles */,
 				6EB1AFB6241E208400F58686 /* skyboxShader.vert in CopyFiles */,
 				6EB1AFA62417A81000F58686 /* oceanShader.vert in CopyFiles */,
@@ -65,6 +70,10 @@
 		6EB1AFB1241E1ADA00F58686 /* Skybox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Skybox.cpp; sourceTree = "<group>"; };
 		6EB1AFB3241E1B3600F58686 /* skyboxShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = skyboxShader.frag; sourceTree = "<group>"; };
 		6EB1AFB4241E1B3600F58686 /* skyboxShader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = skyboxShader.vert; sourceTree = "<group>"; };
+		6EB1AFBA241E5D2500F58686 /* Skydome.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Skydome.cpp; sourceTree = "<group>"; };
+		6EB1AFBB241E5D2500F58686 /* Skydome.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Skydome.h; sourceTree = "<group>"; };
+		6EB1AFBD241E5F8F00F58686 /* skydomeShader.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = skydomeShader.vert; sourceTree = "<group>"; };
+		6EB1AFBE241E628700F58686 /* skydomeShader.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = skydomeShader.frag; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +128,8 @@
 				6EB1AF8D24179F4900F58686 /* cse167_final.entitlements */,
 				6EB1AFA82417BFC300F58686 /* WaveCalculator.cpp */,
 				6EB1AFA92417BFC300F58686 /* WaveCalculator.h */,
+				6EB1AFBA241E5D2500F58686 /* Skydome.cpp */,
+				6EB1AFBB241E5D2500F58686 /* Skydome.h */,
 			);
 			path = cse167_final;
 			sourceTree = "<group>";
@@ -139,6 +150,8 @@
 				6EB1AFB4241E1B3600F58686 /* skyboxShader.vert */,
 				6EB1AF9A2417A80900F58686 /* oceanShader.vert */,
 				6EB1AF9B2417A80900F58686 /* oceanShader.frag */,
+				6EB1AFBD241E5F8F00F58686 /* skydomeShader.vert */,
+				6EB1AFBE241E628700F58686 /* skydomeShader.frag */,
 			);
 			path = shaders;
 			sourceTree = "<group>";
@@ -202,6 +215,7 @@
 			files = (
 				6EB1AFA12417A80900F58686 /* shader.cpp in Sources */,
 				6EB1AFA22417A80900F58686 /* Window.cpp in Sources */,
+				6EB1AFBC241E5D2500F58686 /* Skydome.cpp in Sources */,
 				6EB1AFAA2417BFC300F58686 /* WaveCalculator.cpp in Sources */,
 				6EB1AFB2241E1ADA00F58686 /* Skybox.cpp in Sources */,
 				6EB1AFAF241E0ADE00F58686 /* TinyLoader.cpp in Sources */,

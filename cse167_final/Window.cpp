@@ -4,17 +4,26 @@
  * Declare your variables below. Unnamed namespace is used here to avoid 
  * declaring global or static variables.
  */
+#define DAY 1
+#define NIGHT 0
 namespace
 {
 	int width, height;
 	std::string windowTitle("GLFW Starter Project");
+    
+    int nightShift = DAY;
+    
+    glm::vec2 mouse_point;
+    glm::vec3 lastPoint;
+    const float m_ROTSCALE = 100.0f;
+    int rightbtn = 0;
 
     WaveCalculator* wave;
     OceanMesh* plane;
     Skybox* skybox;
-
-	glm::vec3 eye(0, 20, 40); // Camera position.
-	glm::vec3 center(0, 15, 0); // The point we are looking at.
+    Skydome* skydome;
+	glm::vec3 eye(0, 20, 0); // Camera position.
+	glm::vec3 center(0, 20, -40); // The point we are looking at.
 	glm::vec3 up(0, 1, 0); // The up direction of the camera.
 	float fovy = 60;
 	float near = 1;
@@ -32,6 +41,11 @@ namespace
     GLuint skyboxProjLoc;
     GLuint skyboxViewLoc;
 
+    GLuint skydomeProgram;
+    GLuint skydomeProjectionLoc;
+    GLuint skydomeModelLoc;
+    GLuint skydomeViewLoc;
+    GLuint skydomedLoc;
 
     std::clock_t start;
     double duration;
@@ -42,6 +56,7 @@ bool Window::initializeProgram()
 	// Create a shader program with a vertex shader and a fragment shader.
 	oceanProgram = LoadShaders("shaders/oceanShader.vert", "shaders/oceanShader.frag");
     skyboxProgram = LoadShaders("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
+    skydomeProgram = LoadShaders("shaders/skydomeShader.vert", "shaders/skydomeShader.frag");
 	// Check the shader program.
 	if (!oceanProgram)
 	{
@@ -53,7 +68,11 @@ bool Window::initializeProgram()
         std::cerr << "Failed to initialize skybox shader program" << std::endl;
         return false;
     }
-
+    if (!skydomeProgram)
+    {
+        std::cerr << "Failed to initialize skydome shader program" << std::endl;
+        return false;
+    }
     /*
 	// Activate the shader program.
 	glUseProgram(program);
@@ -71,8 +90,9 @@ bool Window::initializeObjects()
 	// Create a cube of size 5.
 	// cube = new Cube(5.0f);
     skybox = new Skybox();
-    wave = new WaveCalculator(6);
-    plane = new OceanMesh(300.0f, 0, 300, wave);
+    skydome = new Skydome();
+    wave = new WaveCalculator(4);
+    plane = new OceanMesh(500.0f, 0.0f, 500, wave);
     start = std::clock();
     // plane->print();
 	// Set cube to be the first to display
@@ -85,10 +105,13 @@ void Window::cleanUp()
 {
 	// Deallcoate the objects.
 	delete plane;
-
+    delete skybox;
+    delete skydome;
 	// Delete the shader program.
     glDeleteProgram(skyboxProgram);
 	glDeleteProgram(oceanProgram);
+    glDeleteProgram(skydomeProgram);
+
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -170,14 +193,15 @@ void Window::idleCallback()
     
 	// Perform any updates as necessary.
     duration = (std::clock() - start)/(double)CLOCKS_PER_SEC;
-    // std::cout << "time: " << duration << "\n";
 	plane -> update((float)duration);
+    skydome -> update(skydomedLoc);
 }
 
 void Window::displayCallback(GLFWwindow* window)
 {
 	// Clear the color and depth buffers.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     
     // for skybox
     glUseProgram(skyboxProgram);
@@ -186,9 +210,24 @@ void Window::displayCallback(GLFWwindow* window)
     skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
     glUniformMatrix4fv(skyboxProjLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    skybox->draw();
+    if (nightShift == DAY) skybox->draw(DAY);
+    else skybox->draw(NIGHT);
     glDepthMask(GL_TRUE);
 	
+    // for skydome
+    glUseProgram(skydomeProgram);
+    // Get the locations of uniform variables.
+    skydomeProjectionLoc = glGetUniformLocation(skydomeProgram, "projection");
+    skydomeViewLoc = glGetUniformLocation(skydomeProgram, "view");
+    skydomeModelLoc = glGetUniformLocation(skydomeProgram, "model");
+    skydomedLoc = glGetUniformLocation(skydomeProgram, "d");
+    
+    glm::mat4 skydomeModel = skydome->getModel();
+    glUniformMatrix4fv(skydomeProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(skydomeViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(skydomeModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
+    glUniform1f(skydomedLoc, 0.01f);
+    skydome->draw();
     
     // Activate the shader program.
     glUseProgram(oceanProgram);
@@ -200,7 +239,6 @@ void Window::displayCallback(GLFWwindow* window)
 
     // Specify the values of the uniform variables we are going to use.
 	glm::mat4 model = glm::mat4(1.0f);
-	glm::vec3 color = glm::vec3(1.0f, 0.95f, 0.1f);;
 	glUniformMatrix4fv(oceanProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(oceanViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(oceanModelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -208,7 +246,7 @@ void Window::displayCallback(GLFWwindow* window)
 
 	// Render the object.
     plane->draw();
-
+    
 	// Gets events, including input such as keyboard and mouse or window resizing.
 	glfwPollEvents();
 	// Swap buffers.
@@ -230,8 +268,78 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
+        case GLFW_KEY_N:
+            if (nightShift == DAY) nightShift = NIGHT;
+            else nightShift = DAY;
+            break;
+        case GLFW_KEY_R:
+            delete(skydome);
+            skydome = new Skydome();
+            break;
 		default:
 			break;
 		}
 	}
+}
+
+void Window::mouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        glm::vec2 point = mouse_point;
+        if (button == GLFW_MOUSE_BUTTON_RIGHT)
+        {
+            // skybox
+            rightbtn = 1;
+            lastPoint = trackBallMapping(point);
+        }
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        rightbtn = 0;
+    }
+}
+
+glm::vec3 Window::trackBallMapping(glm::vec2 point)
+{
+    glm::vec3 v;
+    float d;
+    v.x = (2.0f * point.x - width) / width;
+    v.y = (height - 2.0f * point.y) / height;
+    v.z = 0.0f;
+    d = glm::length(v);
+    d = (d<1.0) ? d : 1.0;
+    v.z = sqrtf(1.001 - d*d);
+    glm::normalize(v);
+    return v;
+}
+
+void Window::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    mouse_point = { xpos, ypos };
+    float rotAngle;
+    glm::vec3 curPoint = trackBallMapping(mouse_point);
+    glm::vec3 direction = curPoint - lastPoint;
+    float velocity = glm::length(direction);
+    
+    if (rightbtn) {
+            if (velocity > 0.0001) // If little movement - do nothing.
+            {
+                // Rotate about the axis that is perpendicular to the great circle connecting the mouse movements.
+                std::cout << "clicked\n";
+                glm::vec3 rotAxis;
+                rotAxis = glm::cross(lastPoint, curPoint);
+                rotAngle = velocity * m_ROTSCALE;
+                rotateCamera(glm::vec3(0.0f, 1.0f, 0.0f), direction.x * m_ROTSCALE);
+                rotateCamera(glm::vec3(1.0f, 0.0f, 0.0f), direction.y * m_ROTSCALE);
+                lastPoint = curPoint;
+            }
+    }
+
+        // Save the location of the current point for the next movement.
+}
+
+
+void Window::rotateCamera(glm::vec3 rotAxis, float rotAngle) {
+    view = glm::rotate(glm::mat4(1.0f), rotAngle / 180.0f * glm::pi<float>(), rotAxis) * view;
 }

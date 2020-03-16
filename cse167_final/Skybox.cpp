@@ -51,6 +51,7 @@ Skybox::Skybox()
     glCullFace(GL_BACK);
     
     model = glm::mat4(1.0f);
+    /*
     std::vector<const char*> faces
     {
         "skybox/right.ppm",
@@ -60,7 +61,41 @@ Skybox::Skybox()
         "skybox/front.ppm",
         "skybox/back.ppm"
     };
-    cubemapTexture = loadCubemap(faces);
+     
+    std::vector<const char*> faces
+    {
+        "skybox/sea/calm_sea_rt.ppm",
+        "skybox/sea/calm_sea_lf.ppm",
+        "skybox/sea/calm_sea_up.ppm",
+        "skybox/sea/calm_sea_dn.ppm",
+        "skybox/sea/calm_sea_ft.ppm",
+        "skybox/sea/calm_sea_bk.ppm"
+    };
+     */
+     std::vector<const char*> dayFaces
+        {
+            "skybox/day/front_1.ppm",
+            "skybox/day/front_1.ppm",
+            "skybox/day/up_1.ppm",
+            "skybox/day/down.ppm",
+            "skybox/day/front_1.ppm",
+            "skybox/day/front_1.ppm"
+        };
+        dayTexture = loadCubemap(dayFaces);
+    
+    // else {
+        std::vector<const char*> nightFaces
+        {
+            "skybox/night/right.ppm",
+            "skybox/night/left.ppm",
+            "skybox/night/up.ppm",
+            "skybox/night/down.ppm",
+            "skybox/night/front.ppm",
+            "skybox/night/back.ppm"
+        };
+        nightTexture = loadCubemap(nightFaces);
+    // } 
+     
     
     // Generate a vertex array (VAO) and a vertex buffer objects (VBO).
     glGenVertexArrays(1, &vao);
@@ -74,7 +109,7 @@ Skybox::Skybox()
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     // Pass in the data.
     for (int i = 0; i < 108; i++) {
-        skyboxVertices[i] = skyboxVertices[i] * 1000.0f;
+        skyboxVertices[i] = skyboxVertices[i] * 500.0f;
     }
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices),&skyboxVertices, GL_STATIC_DRAW);
     // Enable vertex attribute 0.
@@ -97,10 +132,13 @@ Skybox::~Skybox()
     glDeleteVertexArrays(1, &vao);
 }
 
-void Skybox::draw()
+void Skybox::draw(int nightshift)
 {
     glBindVertexArray(vao);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    if (nightshift == 1)
+        glBindTexture(GL_TEXTURE_CUBE_MAP, dayTexture);
+    else
+        glBindTexture(GL_TEXTURE_CUBE_MAP, nightTexture);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
 }

@@ -35,13 +35,13 @@ private:
     glm::mat4 model;
     GLuint vao, vbo;
     GLuint projectionLoc, viewLoc;
-    unsigned int cubemapTexture;
-    
+    unsigned int dayTexture;
+    unsigned int nightTexture;
 public:
     Skybox();
     ~Skybox();
     
-    void draw();
+    void draw(int nightshift);
     unsigned char* loadPPM(const char* filename, int& width, int& height);
     unsigned int loadCubemap(std::vector<const char*> faces);
 };

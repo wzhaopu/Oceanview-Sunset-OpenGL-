@@ -23,6 +23,7 @@
 #include "shader.h"
 #include "OceanMesh.h"
 #include "Skybox.h"
+#include "Skydome.h"
 
 class Window
 {
@@ -35,6 +36,10 @@ public:
 	static void idleCallback();
 	static void displayCallback(GLFWwindow*);
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static glm::vec3 trackBallMapping(glm::vec2 point);
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+    static void rotateCamera(glm::vec3 rotAxis, float rotAngle);
 };
 
 #endif
