@@ -32,8 +32,7 @@ class Skydome
 {
 protected:
     glm::mat4 model;
-    float rotAmt;
-    float depth;
+    float xRot;
     int numVertices;
     int numIndices;
     std::vector<glm::vec3> vertices;
@@ -47,19 +46,17 @@ protected:
     float toRadians(float degrees);
     void generateSphere(int prec);
     void parseFile();
-    // texture generation
-    void generateNoise();
-    double smoothNoise(double x1, double y1, double z1);
-    double turbulence(double x, double y, double z, double maxZoom);
-    void fillDataArray(GLubyte data[]);
-    int load3DTexture();
+    unsigned char* loadPPM(const char* filename, int& width, int& height);
+    int loadTexture();
 
 public:
     Skydome();
     ~Skydome();
     glm::mat4 getModel();
+    float getXRot();
     void draw();
-    void update(GLuint dLoc);
+    void update();
+
     
 };
 #endif /* Skydome_hpp */

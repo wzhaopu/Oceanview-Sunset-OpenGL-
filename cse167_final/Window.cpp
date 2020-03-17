@@ -20,8 +20,8 @@ namespace
 
     WaveCalculator* wave;
     OceanMesh* plane;
-    Skybox* skybox;
-    Skydome* skydome;
+    Skydome* skybox;
+    Clouds* clouds;
 	glm::vec3 eye(0, 20, 0); // Camera position.
 	glm::vec3 center(0, 20, -40); // The point we are looking at.
 	glm::vec3 up(0, 1, 0); // The up direction of the camera.
@@ -36,16 +36,18 @@ namespace
 	GLuint oceanViewLoc; // Location of view in shader.
 	GLuint oceanModelLoc; // Location of model in shader.
     GLuint oceanCamLoc;
+    GLuint oceanXRotLoc;
 
     GLuint skyboxProgram;
     GLuint skyboxProjLoc;
     GLuint skyboxViewLoc;
+    GLuint skyboxModelLoc;
 
-    GLuint skydomeProgram;
-    GLuint skydomeProjectionLoc;
-    GLuint skydomeModelLoc;
-    GLuint skydomeViewLoc;
-    GLuint skydomedLoc;
+    GLuint cloudsProgram;
+    GLuint cloudsProjectionLoc;
+    GLuint cloudsModelLoc;
+    GLuint cloudsViewLoc;
+    GLuint cloudsdLoc;
 
     std::clock_t start;
     double duration;
@@ -55,8 +57,8 @@ bool Window::initializeProgram()
 {
 	// Create a shader program with a vertex shader and a fragment shader.
 	oceanProgram = LoadShaders("shaders/oceanShader.vert", "shaders/oceanShader.frag");
-    skyboxProgram = LoadShaders("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
-    skydomeProgram = LoadShaders("shaders/skydomeShader.vert", "shaders/skydomeShader.frag");
+    skyboxProgram = LoadShaders("shaders/skydomeShader.vert", "shaders/skydomeShader.frag");
+    cloudsProgram = LoadShaders("shaders/cloudsShader.vert", "shaders/cloudsShader.frag");
 	// Check the shader program.
 	if (!oceanProgram)
 	{
@@ -68,20 +70,12 @@ bool Window::initializeProgram()
         std::cerr << "Failed to initialize skybox shader program" << std::endl;
         return false;
     }
-    if (!skydomeProgram)
+    if (!cloudsProgram)
     {
-        std::cerr << "Failed to initialize skydome shader program" << std::endl;
+        std::cerr << "Failed to initialize clouds shader program" << std::endl;
         return false;
     }
-    /*
-	// Activate the shader program.
-	glUseProgram(program);
-	// Get the locations of uniform variables.
-	oceanProjectionLoc = glGetUniformLocation(oceanProgram, "projection");
-	oceanViewLoc = glGetUniformLocation(oceanProgram, "view");
-	oceanModelLoc = glGetUniformLocation(oceanProgram, "model");
-	oceanColorLoc = glGetUniformLocation(oceanProgram, "color");
-     */
+
 	return true;
 }
 
@@ -89,8 +83,8 @@ bool Window::initializeObjects()
 {
 	// Create a cube of size 5.
 	// cube = new Cube(5.0f);
-    skybox = new Skybox();
-    skydome = new Skydome();
+    skybox = new Skydome();
+    clouds = new Clouds();
     wave = new WaveCalculator(4);
     plane = new OceanMesh(500.0f, 0.0f, 500, wave);
     start = std::clock();
@@ -106,11 +100,11 @@ void Window::cleanUp()
 	// Deallcoate the objects.
 	delete plane;
     delete skybox;
-    delete skydome;
+    delete clouds;
 	// Delete the shader program.
     glDeleteProgram(skyboxProgram);
 	glDeleteProgram(oceanProgram);
-    glDeleteProgram(skydomeProgram);
+    glDeleteProgram(cloudsProgram);
 
 }
 
@@ -193,8 +187,9 @@ void Window::idleCallback()
     
 	// Perform any updates as necessary.
     duration = (std::clock() - start)/(double)CLOCKS_PER_SEC;
-	plane -> update((float)duration);
-    skydome -> update(skydomedLoc);
+    skybox->update();
+    plane -> update((float)duration);
+    clouds -> update(cloudsdLoc);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -205,29 +200,32 @@ void Window::displayCallback(GLFWwindow* window)
     
     // for skybox
     glUseProgram(skyboxProgram);
-    glDepthMask(GL_FALSE);
+    // glDepthMask(GL_FALSE);
     skyboxProjLoc = glGetUniformLocation(skyboxProgram, "projection");
     skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
+    skyboxModelLoc = glGetUniformLocation(skyboxProgram, "model");
+    glm::mat4 skydomeModel = skybox -> getModel();
+    glUniformMatrix4fv(skyboxModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
     glUniformMatrix4fv(skyboxProjLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    if (nightShift == DAY) skybox->draw(DAY);
-    else skybox->draw(NIGHT);
-    glDepthMask(GL_TRUE);
+    // if (nightShift == DAY) skybox->draw(DAY);
+    skybox->draw();
+    // glDepthMask(GL_TRUE);
 	
     // for skydome
-    glUseProgram(skydomeProgram);
+    glUseProgram(cloudsProgram);
     // Get the locations of uniform variables.
-    skydomeProjectionLoc = glGetUniformLocation(skydomeProgram, "projection");
-    skydomeViewLoc = glGetUniformLocation(skydomeProgram, "view");
-    skydomeModelLoc = glGetUniformLocation(skydomeProgram, "model");
-    skydomedLoc = glGetUniformLocation(skydomeProgram, "d");
+    cloudsProjectionLoc = glGetUniformLocation(cloudsProgram, "projection");
+    cloudsViewLoc = glGetUniformLocation(cloudsProgram, "view");
+    cloudsModelLoc = glGetUniformLocation(cloudsProgram, "model");
+    cloudsdLoc = glGetUniformLocation(cloudsProgram, "d");
     
-    glm::mat4 skydomeModel = skydome->getModel();
-    glUniformMatrix4fv(skydomeProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix4fv(skydomeViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(skydomeModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
-    glUniform1f(skydomedLoc, 0.01f);
-    skydome->draw();
+    glm::mat4 cloudsModel = clouds->getModel();
+    glUniformMatrix4fv(cloudsProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(cloudsViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(cloudsModelLoc, 1, GL_FALSE, glm::value_ptr(cloudsModel));
+    glUniform1f(cloudsdLoc, 0.01f);
+    clouds->draw();
     
     // Activate the shader program.
     glUseProgram(oceanProgram);
@@ -236,13 +234,16 @@ void Window::displayCallback(GLFWwindow* window)
     oceanViewLoc = glGetUniformLocation(oceanProgram, "view");
     oceanModelLoc = glGetUniformLocation(oceanProgram, "model");
     oceanCamLoc = glGetUniformLocation(oceanProgram, "cameraPos");
+    oceanXRotLoc = glGetUniformLocation(oceanProgram, "xRot");
 
     // Specify the values of the uniform variables we are going to use.
 	glm::mat4 model = glm::mat4(1.0f);
+    float xRot = skybox->getXRot();
 	glUniformMatrix4fv(oceanProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(oceanViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(oceanModelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(oceanCamLoc, 1, GL_FALSE, glm::value_ptr(eye));
+    glUniform1f(oceanXRotLoc, xRot);
 
 	// Render the object.
     plane->draw();
@@ -273,8 +274,8 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
             else nightShift = DAY;
             break;
         case GLFW_KEY_R:
-            delete(skydome);
-            skydome = new Skydome();
+            delete(clouds);
+            clouds = new Clouds();
             break;
 		default:
 			break;
@@ -326,7 +327,6 @@ void Window::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
             if (velocity > 0.0001) // If little movement - do nothing.
             {
                 // Rotate about the axis that is perpendicular to the great circle connecting the mouse movements.
-                std::cout << "clicked\n";
                 glm::vec3 rotAxis;
                 rotAxis = glm::cross(lastPoint, curPoint);
                 rotAngle = velocity * m_ROTSCALE;

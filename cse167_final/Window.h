@@ -23,6 +23,7 @@
 #include "shader.h"
 #include "OceanMesh.h"
 #include "Skybox.h"
+#include "Clouds.h"
 #include "Skydome.h"
 
 class Window

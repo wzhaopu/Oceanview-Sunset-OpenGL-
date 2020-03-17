@@ -1,5 +1,5 @@
 //
-//  Clouds.hpp
+//  Skydome.hpp
 //  cse167_final
 //
 //  Created by Zhaopu Wang on 3/15/20.
@@ -17,24 +17,49 @@
 #endif
 #include <GLFW/glfw3.h>
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <vector>
+#include <math.h>   // include math functions, such as sin, cos, M_PI
+#include <iostream> // allow c++ style console printouts
+#include <stdlib.h>
+#include <cmath>
 
-#define noiseWidth 256
-#define noiseHeight 256
-#define noiseDepth 256
 class Clouds
 {
 protected:
-    double noise[noiseHeight][noiseWidth][noiseDepth];
+    glm::mat4 model;
+    float rotAmt;
+    float depth;
+    int numVertices;
+    int numIndices;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texCoords;
+    std::vector<unsigned int> indices;
+
+    GLuint vao, ebo;
+    GLuint vbos[2];
+    
+    float toRadians(float degrees);
+    void generateSphere(int prec);
+    void parseFile();
+    // texture generation
     void generateNoise();
-    float smoothNoise(double x1, double y1, double z1);
+    double smoothNoise(double x1, double y1, double z1);
     double turbulence(double x, double y, double z, double maxZoom);
     void fillDataArray(GLubyte data[]);
     int load3DTexture();
+
 public:
     Clouds();
     ~Clouds();
+    glm::mat4 getModel();
+    void draw();
+    void update(GLuint dLoc);
+    
 };
-
-#endif /* Clouds_hpp */
+#endif /* Skydome_hpp */

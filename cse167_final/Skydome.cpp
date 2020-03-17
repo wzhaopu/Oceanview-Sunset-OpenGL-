@@ -7,20 +7,18 @@
 //
 
 #include "Skydome.h"
-const int noiseWidth = 256;
-const int noiseHeight = 256;
-const int noiseDepth = 256;
-double noise[noiseWidth][noiseHeight][noiseDepth];
-GLuint noiseTexture;
+
+GLuint texture;
 
 Skydome::Skydome()
 {
     model = glm::mat4(1.0f);
-    // model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * model;
-    model = model * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 0.7f, 1.0f));
-    model = glm::rotate(glm::mat4(1), glm::radians(25.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-    depth = 0.01f;
-    rotAmt = 0.0f;
+    model = glm::rotate(glm::mat4(1), glm::radians(75.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
+    model = glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * model;
+    // model = glm::rotate(glm::mat4(1), glm::radians(45.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * model;
+
+
+    xRot = 0.0f;
     // glEnable(GL_CULL_FACE);
     // glCullFace(GL_FRONT_AND_BACK);
     generateSphere(48);
@@ -63,12 +61,8 @@ Skydome::Skydome()
     glBindVertexArray(0);
     
     // textures
-    generateNoise();
-    noiseTexture = load3DTexture();
+    texture = loadTexture();
     
-    // blending
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 Skydome::~Skydome() {
@@ -92,7 +86,7 @@ void Skydome::generateSphere(int prec) {
             float y = (float)cos(toRadians(180.0f - i * 180.0f / prec));
             float x = -(float)cos(toRadians(j*360.0f / prec)) * (float)abs(cos(asin(y)));
             float z = (float)sin(toRadians(j*360.0f / prec)) * (float)abs(cos(asin(y)));
-            vertices[i*(prec + 1) + j] = glm::vec3(x, y, z)*500.0f;
+            vertices[i*(prec + 1) + j] = glm::vec3(x, y, z)*700.0f;
             texCoords[i*(prec + 1) + j] = glm::vec2(((float)j / prec), ((float)i / prec));
             normals[i*(prec + 1) + j] = glm::vec3(x,y,z);
         }
@@ -190,124 +184,121 @@ void Skydome::draw(){
     glBindVertexArray(0);
 }
 
-void Skydome::update(GLuint dLoc){
-    model = glm::rotate(glm::mat4(1), glm::radians(0.01f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-
-    depth += 0.00005f;
-    if (depth >= 0.99f) depth = 0.01f; // wrap-around when we get to the end of the texture map
-    glUniform1f(dLoc, depth);
-}
-
-void Skydome::generateNoise()
-{
-    for (int x = 0; x < noiseWidth; x++) {
-        for (int y = 0; y < noiseHeight; y++) {
-            for (int z = 0; z < noiseDepth; z++) {
-                noise[x][y][z] = (double)rand() / (RAND_MAX+1.0);
-            }
-        }
+void Skydome::update(){
+    // model = glm::rotate(glm::mat4(1), glm::radians(0.002f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+    // model = glm::rotate(glm::mat4(1), glm::radians(0.01f), glm::vec3(0.0f, -1.0f, 0.0f)) * model;
+    // if (xRot < 100.0f || yRot >= 150.0f) {
+    model = glm::rotate(glm::mat4(1), glm::radians(0.1f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+        // model = glm::rotate(glm::mat4(1), glm::radians(0.0005f), glm::vec3(0.0f, 0.0f, 1.0f)) * model;
+    xRot += 0.1f;
+    // if (xRot == 360.0f)
+    //    xRot = 0.0f;
+    // }
+    /*
+    else {
+        model = glm::rotate(glm::mat4(1), glm::radians(0.02f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
+        // model = glm::rotate(glm::mat4(1), glm::radians(0.005f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+        yRot += 0.02f;
     }
+     */
+    // else xRot = 0.0f;
+    // else {
+    //     model = glm::rotate(glm::mat4(1), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+    //    xRot += 70.0f;
+    // }
+
 }
 
-void Skydome::fillDataArray(GLubyte data[])
+float Skydome::getXRot()
 {
-    for (int i = 0; i < noiseWidth; i++) {
-        for (int j = 0; j < noiseHeight; j++) {
-            for (int k = 0; k < noiseDepth; k++) {
-                /*
-                double turb = turbulence(i, j, k, 32);
-                float brightness = 1.0f - (float)turb / 256.0f;
-                float redPortion = brightness*255.0f;
-                float greenPortion = brightness*255.0f;
-                float bluePortion = 1.0f*255.0f;
-                int base = i*(noiseWidth*noiseHeight*4)+j*(noiseHeight*4)+k*4;
-                data[base+0] = (GLubyte)redPortion;
-                data[base+1] = (GLubyte)greenPortion;
-                data[base+2] = (GLubyte)bluePortion;
-                data[base+3] = (GLubyte)turb;
-                */
-                
-                int base = i*(noiseWidth*noiseHeight*4)+j*(noiseHeight*4)+k*4;
-                double turb = turbulence(i, j, k, 32);
-                data[base+0] = (GLubyte)255.0f;
-                data[base+1] = (GLubyte)255.0f;
-                data[base+2] = (GLubyte)255.0f;
-                data[base+3] = (GLubyte)(turb-30.0f);
-                
-               if ((turb-30.0f) < 0.0f)
-                  data[base+3] = (GLubyte)0.0f;
-
-
-            }
-        }
-    }
-}
-
-int Skydome::load3DTexture()
-{
-    GLuint textureID;
-    GLubyte* data = new GLubyte[noiseWidth*noiseHeight*noiseDepth*4];
-    
-    fillDataArray(data);
-    // make sure not bytes are paddes;
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
-    // use bilinear interpolation
-
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_3D, textureID);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, noiseWidth, noiseHeight, noiseDepth, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    // glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, noiseWidth, noiseHeight, noiseDepth, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
-    return textureID;
-}
-
-double Skydome::smoothNoise(double x1, double y1, double z1)
-{
-    double fractX = x1 - int(x1);
-    double fractY = y1 - int(y1);
-    double fractZ = z1 - int(z1);
-
-    int x2 = (int(x1) + noiseWidth + 1) % noiseWidth;
-    int y2 = (int(y1) + noiseHeight + 1) % noiseHeight;
-    int z2 = (int(z1) + noiseDepth + 1) % noiseDepth;
-
-
-   //smooth the noise with bilinear interpolation
-    double value = 0.0;
-    value += (1-fractX) * (1-fractY) * (1-fractZ) * noise[(int)x1][(int)y1][(int)z1];
-    value += (1-fractX) * fractY     * (1-fractZ) * noise[(int)x1][(int)y2][(int)z1];
-    value += fractX     * (1-fractY) * (1-fractZ) * noise[(int)x2][(int)y1][(int)z1];
-    value += fractX     * fractY     * (1-fractZ) * noise[(int)x2][(int)y2][(int)z1];
-    
-    value += (1-fractX) * (1-fractY) * fractZ     * noise[(int)x1][(int)y1][(int)z2];
-    value += (1-fractX) * fractY     * fractZ     * noise[(int)x1][(int)y2][(int)z2];
-    value += fractX     * (1-fractY) * fractZ     * noise[(int)x2][(int)y1][(int)z2];
-    value += fractX     * fractY     * fractZ     * noise[(int)x2][(int)y2][(int)z2];
-
-    return value;
-}
-
-double Skydome::turbulence(double x, double y, double z, double size)
-{
-    double value = 0.0;
-    double initialSize = size;
-    double cloudQuant;
-    while (size >= 0.9) {
-        value = value + smoothNoise(x/size, y/size, z/size)*size;
-        size = size / 2.0;
-    }
-    cloudQuant = 140.0;
-    value = value /initialSize;
-    double temp = value * 128.0 - cloudQuant;
-    temp = (1.0/(1.0+pow(2.718, -0.2*temp)));
-    value = 256.0 * temp;
-    return value;
+    return xRot;
 }
 
 glm::mat4 Skydome::getModel()
 {
     return model;
+}
+
+unsigned char* Skydome::loadPPM(const char* filename, int& width, int& height)
+{
+    const int BUFSIZE = 128;
+    FILE* fp;
+    unsigned int read;
+    unsigned char* rawData;
+    char buf[3][BUFSIZE];
+    char* retval_fgets;
+    size_t retval_sscanf;
+
+    if ( (fp=fopen(filename, "rb")) == NULL)
+    {
+        std::cerr << "error reading ppm file, could not locate " << filename << std::endl;
+        width = 0;
+        height = 0;
+        return NULL;
+    }
+
+    // Read magic number:
+    retval_fgets = fgets(buf[0], BUFSIZE, fp);
+
+    // Read width and height:
+    do
+    {
+        retval_fgets=fgets(buf[0], BUFSIZE, fp);
+    } while (buf[0][0] == '#');
+    retval_sscanf=sscanf(buf[0], "%s %s", buf[1], buf[2]);
+    width  = atoi(buf[1]);
+    height = atoi(buf[2]);
+
+    // Read maxval:
+    do
+    {
+      retval_fgets=fgets(buf[0], BUFSIZE, fp);
+    } while (buf[0][0] == '#');
+
+    // Read image data:
+    rawData = new unsigned char[width * height * 3];
+    read = fread(rawData, width * height * 3, 1, fp);
+    fclose(fp);
+    if (read != 1)
+    {
+        std::cerr << "error parsing ppm file, incomplete data" << std::endl;
+        delete[] rawData;
+        width = 0;
+        height = 0;
+        return NULL;
+    }
+
+    return rawData;
+}
+
+int Skydome::loadTexture()
+{
+    GLuint textureID;
+    unsigned char *data;
+    int width, height;
+
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    
+    // wrapping
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+ 
+    // use bilinear interpolation
+    data = loadPPM("skybox/texture.ppm", width, height);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        std::cout << "Texture failed to load" << std::endl;
+    }
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    // glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, noiseWidth, noiseHeight, noiseDepth, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    return textureID;
 }
