@@ -134,6 +134,7 @@ Skybox::~Skybox()
 
 void Skybox::draw(int nightshift)
 {
+    glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(vao);
     if (nightshift == 1)
         glBindTexture(GL_TEXTURE_CUBE_MAP, dayTexture);

@@ -8,7 +8,6 @@
 
 #include "Skydome.h"
 
-GLuint texture;
 
 Skydome::Skydome()
 {
@@ -19,10 +18,9 @@ Skydome::Skydome()
 
 
     xRot = 0.0f;
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_FRONT_AND_BACK);
+
     generateSphere(48);
-    // parseFile();
+
     glGenVertexArrays(1, &vao);
     glGenBuffers(2, vbos);
     glGenBuffers(1, &ebo);
@@ -62,7 +60,6 @@ Skydome::Skydome()
     
     // textures
     texture = loadTexture();
-    
 }
 
 Skydome::~Skydome() {
@@ -178,6 +175,8 @@ void Skydome::parseFile() {
 }
 
 void Skydome::draw(){
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
     glBindVertexArray(vao);
     // glBindTexture(GL_TEXTURE_3D, noiseTexture);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -188,24 +187,10 @@ void Skydome::update(){
     // model = glm::rotate(glm::mat4(1), glm::radians(0.002f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
     // model = glm::rotate(glm::mat4(1), glm::radians(0.01f), glm::vec3(0.0f, -1.0f, 0.0f)) * model;
     // if (xRot < 100.0f || yRot >= 150.0f) {
-    model = glm::rotate(glm::mat4(1), glm::radians(0.1f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+    model = glm::rotate(glm::mat4(1), glm::radians(0.05f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
         // model = glm::rotate(glm::mat4(1), glm::radians(0.0005f), glm::vec3(0.0f, 0.0f, 1.0f)) * model;
-    xRot += 0.1f;
-    // if (xRot == 360.0f)
-    //    xRot = 0.0f;
-    // }
-    /*
-    else {
-        model = glm::rotate(glm::mat4(1), glm::radians(0.02f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-        // model = glm::rotate(glm::mat4(1), glm::radians(0.005f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
-        yRot += 0.02f;
-    }
-     */
-    // else xRot = 0.0f;
-    // else {
-    //     model = glm::rotate(glm::mat4(1), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
-    //    xRot += 70.0f;
-    // }
+    xRot += 0.05f;
+
 
 }
 
@@ -301,4 +286,8 @@ int Skydome::loadTexture()
 
     // glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, noiseWidth, noiseHeight, noiseDepth, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     return textureID;
+}
+
+GLuint Skydome::getTextureID() {
+    return texture;
 }

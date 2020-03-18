@@ -31,6 +31,7 @@
 class Skydome
 {
 protected:
+    GLuint texture;
     glm::mat4 model;
     float xRot;
     int numVertices;
@@ -54,6 +55,7 @@ public:
     ~Skydome();
     glm::mat4 getModel();
     float getXRot();
+    GLuint getTextureID();
     void draw();
     void update();
 

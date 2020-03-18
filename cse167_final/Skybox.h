@@ -11,8 +11,6 @@
 #ifndef GLM_FORCE_RADIANS
 #define GLM_FORCE_RADIANS
 #endif
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 //For loading images
 #include <math.h>   // include math functions, such as sin, cos, M_PI

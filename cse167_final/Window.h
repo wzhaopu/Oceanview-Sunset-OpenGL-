@@ -25,6 +25,8 @@
 #include "Skybox.h"
 #include "Clouds.h"
 #include "Skydome.h"
+#include "PointLight.h"
+#include "Object.h"
 
 class Window
 {
@@ -41,6 +43,8 @@ public:
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
     static void rotateCamera(glm::vec3 rotAxis, float rotAngle);
+    static void enableBloom();
+    static void renderQuad();
 };
 
 #endif

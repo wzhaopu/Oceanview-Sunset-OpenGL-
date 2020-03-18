@@ -23,6 +23,12 @@
 		6EB1AFB6241E208400F58686 /* skyboxShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EB1AFB4241E1B3600F58686 /* skyboxShader.vert */; };
 		6EFEB44E2420493B00BA4C6E /* Clouds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EFEB44D2420493B00BA4C6E /* Clouds.cpp */; };
 		6EFEB45124204AA000BA4C6E /* Skydome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EFEB44F24204AA000BA4C6E /* Skydome.cpp */; };
+		6EFEB47424218D5F00BA4C6E /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EFEB47224218D5F00BA4C6E /* Object.cpp */; };
+		6EFEB4772421A00F00BA4C6E /* PointLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EFEB4752421A00F00BA4C6E /* PointLight.cpp */; };
+		6EFEB47A2421BC1B00BA4C6E /* objectShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EFEB4782421B24200BA4C6E /* objectShader.vert */; };
+		6EFEB47B2421BC1B00BA4C6E /* objectShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EFEB4792421BA2700BA4C6E /* objectShader.frag */; };
+		6EFEB47C2421BC2300BA4C6E /* skydomeShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EFEB45224204AF300BA4C6E /* skydomeShader.frag */; };
+		6EFEB47D2421BC2300BA4C6E /* skydomeShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6EFEB45324204AF300BA4C6E /* skydomeShader.vert */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,6 +38,10 @@
 			dstPath = shaders;
 			dstSubfolderSpec = 16;
 			files = (
+				6EFEB47C2421BC2300BA4C6E /* skydomeShader.frag in CopyFiles */,
+				6EFEB47D2421BC2300BA4C6E /* skydomeShader.vert in CopyFiles */,
+				6EFEB47A2421BC1B00BA4C6E /* objectShader.vert in CopyFiles */,
+				6EFEB47B2421BC1B00BA4C6E /* objectShader.frag in CopyFiles */,
 				6E2DDF68241E7766007A72CF /* cloudsShader.vert in CopyFiles */,
 				6E2DDF69241E7766007A72CF /* cloudsShader.frag in CopyFiles */,
 				6EB1AFB5241E208400F58686 /* skyboxShader.frag in CopyFiles */,
@@ -73,6 +83,15 @@
 		6EFEB45024204AA000BA4C6E /* Skydome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skydome.h; sourceTree = "<group>"; };
 		6EFEB45224204AF300BA4C6E /* skydomeShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = skydomeShader.frag; sourceTree = "<group>"; };
 		6EFEB45324204AF300BA4C6E /* skydomeShader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = skydomeShader.vert; sourceTree = "<group>"; };
+		6EFEB47224218D5F00BA4C6E /* Object.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
+		6EFEB4752421A00F00BA4C6E /* PointLight.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PointLight.cpp; sourceTree = "<group>"; };
+		6EFEB4762421A00F00BA4C6E /* PointLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PointLight.h; sourceTree = "<group>"; };
+		6EFEB4782421B24200BA4C6E /* objectShader.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = objectShader.vert; sourceTree = "<group>"; };
+		6EFEB4792421BA2700BA4C6E /* objectShader.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = objectShader.frag; sourceTree = "<group>"; };
+		6EFEB47F2421C8C500BA4C6E /* blurShader.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blurShader.frag; sourceTree = "<group>"; };
+		6EFEB4802421CCEC00BA4C6E /* blendShader.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blendShader.frag; sourceTree = "<group>"; };
+		6EFEB4812421CD2F00BA4C6E /* blurShader.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blurShader.vert; sourceTree = "<group>"; };
+		6EFEB4822421CD4C00BA4C6E /* blendShader.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = blendShader.vert; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +136,7 @@
 				6EB1AF9C2417A80900F58686 /* main.cpp */,
 				6EB1AF942417A80800F58686 /* main.h */,
 				6EB1AF9E2417A80900F58686 /* Object.h */,
+				6EFEB47224218D5F00BA4C6E /* Object.cpp */,
 				6EB1AF9F2417A80900F58686 /* OceanMesh.cpp */,
 				6EB1AF932417A80800F58686 /* OceanMesh.h */,
 				6EB1AF952417A80800F58686 /* shader.cpp */,
@@ -127,6 +147,8 @@
 				6EB1AF8D24179F4900F58686 /* cse167_final.entitlements */,
 				6EB1AFA82417BFC300F58686 /* WaveCalculator.cpp */,
 				6EB1AFA92417BFC300F58686 /* WaveCalculator.h */,
+				6EFEB4752421A00F00BA4C6E /* PointLight.cpp */,
+				6EFEB4762421A00F00BA4C6E /* PointLight.h */,
 			);
 			path = cse167_final;
 			sourceTree = "<group>";
@@ -145,12 +167,18 @@
 			children = (
 				6EFEB45224204AF300BA4C6E /* skydomeShader.frag */,
 				6EFEB45324204AF300BA4C6E /* skydomeShader.vert */,
-				6EB1AFB3241E1B3600F58686 /* skyboxShader.frag */,
 				6EB1AFB4241E1B3600F58686 /* skyboxShader.vert */,
+				6EB1AFB3241E1B3600F58686 /* skyboxShader.frag */,
 				6EB1AF9A2417A80900F58686 /* oceanShader.vert */,
 				6EB1AF9B2417A80900F58686 /* oceanShader.frag */,
 				6EB1AFBD241E5F8F00F58686 /* cloudsShader.vert */,
 				6EB1AFBE241E628700F58686 /* cloudsShader.frag */,
+				6EFEB4782421B24200BA4C6E /* objectShader.vert */,
+				6EFEB4792421BA2700BA4C6E /* objectShader.frag */,
+				6EFEB4812421CD2F00BA4C6E /* blurShader.vert */,
+				6EFEB47F2421C8C500BA4C6E /* blurShader.frag */,
+				6EFEB4822421CD4C00BA4C6E /* blendShader.vert */,
+				6EFEB4802421CCEC00BA4C6E /* blendShader.frag */,
 			);
 			path = shaders;
 			sourceTree = "<group>";
@@ -213,6 +241,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6EFEB45124204AA000BA4C6E /* Skydome.cpp in Sources */,
+				6EFEB4772421A00F00BA4C6E /* PointLight.cpp in Sources */,
 				6EB1AFA12417A80900F58686 /* shader.cpp in Sources */,
 				6EB1AFA22417A80900F58686 /* Window.cpp in Sources */,
 				6EB1AFAA2417BFC300F58686 /* WaveCalculator.cpp in Sources */,
@@ -220,6 +249,7 @@
 				6EFEB44E2420493B00BA4C6E /* Clouds.cpp in Sources */,
 				6EB1AFA32417A80900F58686 /* main.cpp in Sources */,
 				6EB1AFA42417A80900F58686 /* OceanMesh.cpp in Sources */,
+				6EFEB47424218D5F00BA4C6E /* Object.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

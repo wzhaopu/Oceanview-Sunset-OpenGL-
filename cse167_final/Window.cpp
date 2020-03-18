@@ -6,12 +6,24 @@
  */
 #define DAY 1
 #define NIGHT 0
+#define SUN 1
+#define MOON 0
 namespace
 {
+    int bloom = 1;
+    float exposure = 0.5f;
+    unsigned int quadVAO = 0;
+    unsigned int quadVBO;
+    unsigned int hdrFBO;
+    unsigned int colorBuffers[2];
+    unsigned int rboDepth;
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongColorbuffers[2];
+
 	int width, height;
 	std::string windowTitle("GLFW Starter Project");
     
-    int nightShift = DAY;
+    int nightShift = NIGHT;
     
     glm::vec2 mouse_point;
     glm::vec3 lastPoint;
@@ -22,6 +34,11 @@ namespace
     OceanMesh* plane;
     Skydome* skybox;
     Clouds* clouds;
+    PointLight* sunPtLight;
+    PointLight* moonPtLight;
+    Object* sun;
+    Object* moon;
+
 	glm::vec3 eye(0, 20, 0); // Camera position.
 	glm::vec3 center(0, 20, -40); // The point we are looking at.
 	glm::vec3 up(0, 1, 0); // The up direction of the camera.
@@ -37,6 +54,20 @@ namespace
 	GLuint oceanModelLoc; // Location of model in shader.
     GLuint oceanCamLoc;
     GLuint oceanXRotLoc;
+    // -------- material -------
+    GLuint diffuseLoc;
+    GLuint specularLoc;
+    GLuint ambientLoc;
+    GLuint shininessLoc;
+    // -------- pointLight ---------
+    GLuint ptLightColorLoc;
+    GLuint ptLightPosLoc;
+    // -------- light rep(sun/moon) ------
+    GLuint objectProgram; // The shader program id.
+    GLuint objectProjectionLoc; // Location of projection in shader.
+    GLuint objectViewLoc; // Location of view in shader.
+    GLuint objectModelLoc; // Location of model in shader.
+    GLuint objectColorLoc;
 
     GLuint skyboxProgram;
     GLuint skyboxProjLoc;
@@ -49,6 +80,15 @@ namespace
     GLuint cloudsViewLoc;
     GLuint cloudsdLoc;
 
+    // ---------- bloom -----------
+    GLuint blurProgram;
+    GLuint blurHoriLoc;
+
+    GLuint blendProgram;
+    GLuint blendBloomLoc;
+    GLuint blendExpLoc;
+
+    // clock
     std::clock_t start;
     double duration;
 };
@@ -59,6 +99,10 @@ bool Window::initializeProgram()
 	oceanProgram = LoadShaders("shaders/oceanShader.vert", "shaders/oceanShader.frag");
     skyboxProgram = LoadShaders("shaders/skydomeShader.vert", "shaders/skydomeShader.frag");
     cloudsProgram = LoadShaders("shaders/cloudsShader.vert", "shaders/cloudsShader.frag");
+    objectProgram = LoadShaders("shaders/objectShader.vert", "shaders/objectShader.frag");
+    blurProgram = LoadShaders("shaders/blurShader.vert", "shaders/blurShader.frag");
+    blendProgram = LoadShaders("shaders/blendShader.vert", "shaders/blendShader.frag");
+
 	// Check the shader program.
 	if (!oceanProgram)
 	{
@@ -75,22 +119,38 @@ bool Window::initializeProgram()
         std::cerr << "Failed to initialize clouds shader program" << std::endl;
         return false;
     }
+    if (!objectProgram)
+    {
+        std::cerr << "Failed to initialize object shader program" << std::endl;
+        return false;
+    }
+    if (!blurProgram)
+    {
+        std::cerr << "Failed to initialize blur shader program" << std::endl;
+        return false;
+    }
+    if (!blendProgram)
+    {
+        std::cerr << "Failed to initialize blend shader program" << std::endl;
+        return false;
+    }
 
 	return true;
 }
 
 bool Window::initializeObjects()
 {
-	// Create a cube of size 5.
-	// cube = new Cube(5.0f);
+
     skybox = new Skydome();
     clouds = new Clouds();
     wave = new WaveCalculator(4);
-    plane = new OceanMesh(500.0f, 0.0f, 500, wave);
+    plane = new OceanMesh(300.0f, 0.0f, 300, wave);
     start = std::clock();
-    // plane->print();
-	// Set cube to be the first to display
-	// currentObj = cube;
+    sunPtLight = new PointLight(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 330, -600));
+    sun = new Object(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 330, -600), glm::vec3(70.0f));
+    moonPtLight = new PointLight(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, -600, 0));
+    moon = new Object(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, -600, 0), glm::vec3(30.0f));
+    enableBloom();
 
 	return true;
 }
@@ -101,11 +161,14 @@ void Window::cleanUp()
 	delete plane;
     delete skybox;
     delete clouds;
+    delete sun;
 	// Delete the shader program.
     glDeleteProgram(skyboxProgram);
+    glDeleteProgram(objectProgram);
 	glDeleteProgram(oceanProgram);
     glDeleteProgram(cloudsProgram);
-
+    glDeleteProgram(blurProgram);
+    glDeleteProgram(blendProgram);
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -187,20 +250,32 @@ void Window::idleCallback()
     
 	// Perform any updates as necessary.
     duration = (std::clock() - start)/(double)CLOCKS_PER_SEC;
-    skybox->update();
-    plane -> update((float)duration);
+    skybox -> update();
+    sunPtLight -> update(SUN);
+    sun -> update(SUN);
+    moonPtLight -> update(MOON);
+    moon -> update(MOON);
     clouds -> update(cloudsdLoc);
+    plane -> update((float)duration);
 }
 
 void Window::displayCallback(GLFWwindow* window)
 {
 	// Clear the color and depth buffers.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glEnable(GL_DEPTH_TEST);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
     
+    // ----------------------- rendering ----------------------
     // for skybox
     glUseProgram(skyboxProgram);
-    // glDepthMask(GL_FALSE);
+    //glDepthMask(GL_FALSE);
     skyboxProjLoc = glGetUniformLocation(skyboxProgram, "projection");
     skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
     skyboxModelLoc = glGetUniformLocation(skyboxProgram, "model");
@@ -208,11 +283,33 @@ void Window::displayCallback(GLFWwindow* window)
     glUniformMatrix4fv(skyboxModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
     glUniformMatrix4fv(skyboxProjLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    // if (nightShift == DAY) skybox->draw(DAY);
     skybox->draw();
-    // glDepthMask(GL_TRUE);
-	
-    // for skydome
+    //if (nightShift == DAY) skybox->draw(DAY);
+    //else skybox->draw(NIGHT);
+    //glDepthMask(GL_TRUE);
+    // sun/moon
+    glUseProgram(objectProgram);
+    objectProjectionLoc = glGetUniformLocation(objectProgram, "projection");
+    objectViewLoc = glGetUniformLocation(objectProgram, "view");
+    objectModelLoc = glGetUniformLocation(objectProgram, "model");
+    objectColorLoc = glGetUniformLocation(objectProgram, "color");
+    
+    glm::mat4 objectModel = sun->getModel();
+    glm::vec3 objectColor = sun->getColor();
+    glUniformMatrix4fv(objectProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(objectViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(objectModelLoc, 1, GL_FALSE, glm::value_ptr(objectModel));
+    glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
+    sun->draw();
+    objectModel = moon->getModel();
+    objectColor = moon->getColor();
+    glUniformMatrix4fv(objectProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(objectViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(objectModelLoc, 1, GL_FALSE, glm::value_ptr(objectModel));
+    glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
+    moon->draw();
+
+    // for clouds
     glUseProgram(cloudsProgram);
     // Get the locations of uniform variables.
     cloudsProjectionLoc = glGetUniformLocation(cloudsProgram, "projection");
@@ -235,10 +332,30 @@ void Window::displayCallback(GLFWwindow* window)
     oceanModelLoc = glGetUniformLocation(oceanProgram, "model");
     oceanCamLoc = glGetUniformLocation(oceanProgram, "cameraPos");
     oceanXRotLoc = glGetUniformLocation(oceanProgram, "xRot");
-
-    // Specify the values of the uniform variables we are going to use.
+    // materials
+    diffuseLoc = glGetUniformLocation(oceanProgram, "material.diffuse");
+    specularLoc = glGetUniformLocation(oceanProgram, "material.specular");
+    ambientLoc = glGetUniformLocation(oceanProgram, "material.ambient");
+    shininessLoc = glGetUniformLocation(oceanProgram, "material.shininess");
+    glUniform3fv(diffuseLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
+    glUniform3fv(specularLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
+    glUniform3fv(ambientLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
+    glUniform1f(shininessLoc, 50.0f);
+    // point light
+    ptLightColorLoc = glGetUniformLocation(oceanProgram, "pointLight.color");
+    ptLightPosLoc = glGetUniformLocation(oceanProgram, "pointLight.position");
+    glm::mat4 ptLight2World = sunPtLight->getToWorld();
+    glm::vec3 ptLightPosition = view * ptLight2World * glm::vec4(sunPtLight->getPosition(), 1.0f);
+    glUniform3fv(ptLightColorLoc, 1, glm::value_ptr(sunPtLight->getColor()));
+    glUniform3fv(ptLightPosLoc, 1, glm::value_ptr(ptLightPosition));
+    ptLight2World = moonPtLight->getToWorld();
+    ptLightPosition = view * ptLight2World * glm::vec4(moonPtLight->getPosition(), 1.0f);
+    glUniform3fv(ptLightColorLoc, 1, glm::value_ptr(moonPtLight->getColor()));
+    glUniform3fv(ptLightPosLoc, 1, glm::value_ptr(ptLightPosition));
+    
 	glm::mat4 model = glm::mat4(1.0f);
     float xRot = skybox->getXRot();
+    // float xRot = 0.0f;
 	glUniformMatrix4fv(oceanProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(oceanViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(oceanModelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -246,12 +363,55 @@ void Window::displayCallback(GLFWwindow* window)
     glUniform1f(oceanXRotLoc, xRot);
 
 	// Render the object.
+    GLuint skyTex = skybox -> getTextureID();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, skyTex);
     plane->draw();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // ----------------------------- blurring ------------------------------
     
-	// Gets events, including input such as keyboard and mouse or window resizing.
-	glfwPollEvents();
-	// Swap buffers.
-	glfwSwapBuffers(window);
+    bool horizontal = true, first_iteration = true;
+    unsigned int amount = 10;
+    glUseProgram(blurProgram);
+    for (unsigned int i = 0; i < amount; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+        blurHoriLoc = glGetUniformLocation(blurProgram, "horizontal");
+        glUniform1i(blurHoriLoc, horizontal);
+        glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
+        renderQuad();
+        horizontal = !horizontal;
+        if (first_iteration)
+            first_iteration = false;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // -------------------------- blooming ---------------------------
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(blendProgram);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+    // shaderBloomFinal.setInt("bloom", bloom);
+    // shaderBloomFinal.setFloat("exposure", exposure);
+    blendBloomLoc = glGetUniformLocation(blendProgram, "bloom");
+    blendExpLoc = glGetUniformLocation(blendProgram, "exposure");
+    glUniform1i(blendBloomLoc, bloom);
+    glUniform1f(blendExpLoc, exposure);
+    glDisable(GL_CULL_FACE);
+    renderQuad();
+    std::cout << "bloom: " << (bloom ? "on" : "off") << "| exposure: " << exposure << std::endl;
+    
+
+    // Gets events, including input such as keyboard and mouse or window resizing.
+    glfwPollEvents();
+    // Swap buffers.
+    glfwSwapBuffers(window);
+ 
 }
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -270,8 +430,10 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
         case GLFW_KEY_N:
-            if (nightShift == DAY) nightShift = NIGHT;
-            else nightShift = DAY;
+            nightShift = !nightShift;
+            break;
+        case GLFW_KEY_B:
+            bloom = !bloom;
             break;
         case GLFW_KEY_R:
             delete(clouds);
@@ -342,4 +504,91 @@ void Window::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 
 void Window::rotateCamera(glm::vec3 rotAxis, float rotAngle) {
     view = glm::rotate(glm::mat4(1.0f), rotAngle / 180.0f * glm::pi<float>(), rotAxis) * view;
+}
+
+void Window::enableBloom() {
+    
+    // unsigned int hdrFBO;
+    glGenFramebuffers(1, &hdrFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    // create 2 floating point color buffers (1 for normal rendering, other for brightness treshold values)
+    // unsigned int colorBuffers[2];
+    glGenTextures(2, colorBuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // attach texture to framebuffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+    }
+    // create and attach depth buffer (renderbuffer)
+    // unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
+    // finally check if framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // ping-pong-framebuffer for blurring
+    // unsigned int pingpongFBO[2];
+    // unsigned int pingpongColorbuffers[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongColorbuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+        // also check if framebuffers are complete (no need for depth buffer)
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "Framebuffer not complete!" << std::endl;
+    }
+    glUseProgram(blurProgram);
+    glUniform1i(glGetUniformLocation(blurProgram, "image"), 0);
+
+    glUseProgram(blendProgram);
+    glUniform1i(glGetUniformLocation(blendProgram, "scene"), 0);
+    glUniform1i(glGetUniformLocation(blendProgram, "bloomBlur"), 1);
+}
+
+void Window::renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }

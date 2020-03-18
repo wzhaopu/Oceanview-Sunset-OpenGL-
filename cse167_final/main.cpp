@@ -18,6 +18,7 @@ void setupCallbacks(GLFWwindow* window)
     glfwSetMouseButtonCallback(window, Window::mouseButtonCallback);
     // Set the cursor callback
     glfwSetCursorPosCallback(window, Window::cursorPosCallback);
+    
 }
 
 void setupOpenglSettings()
