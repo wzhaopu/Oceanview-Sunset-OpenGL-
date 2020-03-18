@@ -46,12 +46,11 @@ layout (location = 1) out vec4 BrightColor;
 in vec3 Normal;
 in vec3 Position;
 
-
-
+uniform bool nightShift;
 uniform float xRot;
 uniform vec3 cameraPos;
-uniform sampler2D skybox;
-// uniform samplerCube skybox;
+// uniform sampler2D skybox;
+uniform samplerCube skybox;
 mat3 rotMatX( in float angle ) {
     return mat3(    1.0,             0,              0,
                       0,     cos(angle),    -sin(angle),
@@ -75,28 +74,31 @@ void main()
     float ratio = 1.00 / 1.33;
     vec3 I = normalize(Position - cameraPos);
     vec3 Reflect = reflect(I, normalize(Normal));
-    vec3 rotatedReflect = rotMatY(radians(90.0f))*Reflect;
-    rotatedReflect = rotMatX(radians(-120.0f))*Reflect;
-    rotatedReflect = rotMatX(radians(xRot*(-1.0f)))*rotatedReflect;
+    // vec3 rotatedReflect = rotMatY(radians(90.0f))*Reflect;
+    // rotatedReflect = rotMatX(radians(-120.0f))*Reflect;
+    // rotatedReflect = rotMatX(radians(xRot*(-1.0f)))*rotatedReflect;
     // vec3 rotatedReflect = Reflect;
     // vec3 Refract = refract(I, normalize(rotated), ratio);
+    /*
     float pi = 3.14159265359;
     float reflectU = 0.5 + atan(rotatedReflect.x, rotatedReflect.z)/(2*pi);
     float reflectV = 0.5 + 0.5 * rotatedReflect.y;
     vec2 reflectTC = vec2(reflectU,reflectV);
-
-    vec4 reflectColor = vec4(texture(skybox, reflectTC).rgb, 1.0f);
-    // vec4 reflectColor = vec4(texture(skybox, Reflect).rgb, 1.0f);
+*/
+    // vec4 reflectColor = vec4(texture(skybox, reflectTC).rgb, 1.0f);
+    vec4 reflectColor = vec4(texture(skybox, Reflect).rgb, 1.0f);
     // vec4 refractColor = vec4(texture(skybox, tc).rgb, 1.0f);
-    vec3 oceanBlue = vec3(0.0f, 47.0f/255.0f, 75.0f/255.0f);
-    // vec4 oceanColor = mix(reflectColor, oceanBlue, 0.2f);
+    vec4 oceanBlue = vec4(0.0f, 47.0f/255.0f, 75.0f/255.0f, 1.0f);
+    vec4 oceanColor = mix(reflectColor, oceanBlue, 0.2f);
     // --------------- edit -----------------
     vec3 viewDir = normalize(cameraPos - Position);
     vec3 norm = normalize(Normal);
-    vec3 sunResult = reflectColor.rgb * CalcPointLight(sunPtLight, norm, Position, viewDir, 0.002f);
-    vec3 moonResult = reflectColor.rgb * CalcPointLight(moonPtLight, norm, Position, viewDir, 0.002f);
-    vec3 lightResult = moonResult + sunResult;
+    vec3 sunResult = oceanColor.rgb * CalcPointLight(sunPtLight, norm, Position, viewDir, 0.0015f);
+    vec3 moonResult = oceanColor.rgb * CalcPointLight(moonPtLight, norm, Position, viewDir, 0.1f);
+    vec3 lightResult = sunResult;
     FragColor = vec4(lightResult, 1.0f);
+    if (nightShift)
+        FragColor = oceanColor;
     // FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
     float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));

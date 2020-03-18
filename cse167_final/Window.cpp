@@ -11,7 +11,7 @@
 namespace
 {
     int bloom = 1;
-    float exposure = 0.5f;
+    float exposure = 0.1f;
     unsigned int quadVAO = 0;
     unsigned int quadVBO;
     unsigned int hdrFBO;
@@ -32,7 +32,7 @@ namespace
 
     WaveCalculator* wave;
     OceanMesh* plane;
-    Skydome* skybox;
+    Skybox* skybox;
     Clouds* clouds;
     PointLight* sunPtLight;
     PointLight* moonPtLight;
@@ -54,6 +54,8 @@ namespace
 	GLuint oceanModelLoc; // Location of model in shader.
     GLuint oceanCamLoc;
     GLuint oceanXRotLoc;
+    GLuint oceanNSLoc;
+
     // -------- material -------
     GLuint diffuseLoc;
     GLuint specularLoc;
@@ -79,6 +81,8 @@ namespace
     GLuint cloudsModelLoc;
     GLuint cloudsViewLoc;
     GLuint cloudsdLoc;
+    GLuint cloudsNSLoc;
+
 
     // ---------- bloom -----------
     GLuint blurProgram;
@@ -97,7 +101,7 @@ bool Window::initializeProgram()
 {
 	// Create a shader program with a vertex shader and a fragment shader.
 	oceanProgram = LoadShaders("shaders/oceanShader.vert", "shaders/oceanShader.frag");
-    skyboxProgram = LoadShaders("shaders/skydomeShader.vert", "shaders/skydomeShader.frag");
+    skyboxProgram = LoadShaders("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
     cloudsProgram = LoadShaders("shaders/cloudsShader.vert", "shaders/cloudsShader.frag");
     objectProgram = LoadShaders("shaders/objectShader.vert", "shaders/objectShader.frag");
     blurProgram = LoadShaders("shaders/blurShader.vert", "shaders/blurShader.frag");
@@ -141,15 +145,15 @@ bool Window::initializeProgram()
 bool Window::initializeObjects()
 {
 
-    skybox = new Skydome();
+    skybox = new Skybox();
     clouds = new Clouds();
     wave = new WaveCalculator(4);
     plane = new OceanMesh(300.0f, 0.0f, 300, wave);
     start = std::clock();
-    sunPtLight = new PointLight(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 330, -600));
-    sun = new Object(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 330, -600), glm::vec3(70.0f));
-    moonPtLight = new PointLight(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, -600, 0));
-    moon = new Object(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, -600, 0), glm::vec3(30.0f));
+    sunPtLight = new PointLight(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 30, -100));
+    sun = new Object(glm::vec3(252.0f/255.0f, 212.0f/255.0f, 64.0f/255.0f), glm::vec3(0, 100, -600), glm::vec3(30.0f));
+    moonPtLight = new PointLight(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, 30, -100));
+    moon = new Object(glm::vec3(254.0f/255.0f, 252.0f/255.0f, 215.0f/255.0f), glm::vec3(0, 100, -600), glm::vec3(30.0f));
     enableBloom();
 
 	return true;
@@ -239,7 +243,7 @@ void Window::resizeCallback(GLFWwindow* window, int w, int h)
 	// height = h;
 	// Set the viewport size.
 	glViewport(0, 0, width, height);
-
+    enableBloom();
 	// Set the projection matrix.
 	projection = glm::perspective(glm::radians(fovy),
 		(float)width / (float)height, near, far);
@@ -250,11 +254,11 @@ void Window::idleCallback()
     
 	// Perform any updates as necessary.
     duration = (std::clock() - start)/(double)CLOCKS_PER_SEC;
-    skybox -> update();
-    sunPtLight -> update(SUN);
-    sun -> update(SUN);
-    moonPtLight -> update(MOON);
-    moon -> update(MOON);
+    // skybox -> update();
+    // sunPtLight -> update(SUN);
+    // sun -> update(SUN);
+    // moonPtLight -> update(MOON);
+    // moon -> update(MOON);
     clouds -> update(cloudsdLoc);
     plane -> update((float)duration);
 }
@@ -275,18 +279,18 @@ void Window::displayCallback(GLFWwindow* window)
     // ----------------------- rendering ----------------------
     // for skybox
     glUseProgram(skyboxProgram);
-    //glDepthMask(GL_FALSE);
+    glDepthMask(GL_FALSE);
     skyboxProjLoc = glGetUniformLocation(skyboxProgram, "projection");
     skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
-    skyboxModelLoc = glGetUniformLocation(skyboxProgram, "model");
-    glm::mat4 skydomeModel = skybox -> getModel();
-    glUniformMatrix4fv(skyboxModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
+    //skyboxModelLoc = glGetUniformLocation(skyboxProgram, "model");
+    //glm::mat4 skydomeModel = skybox -> getModel();
+    //glUniformMatrix4fv(skyboxModelLoc, 1, GL_FALSE, glm::value_ptr(skydomeModel));
     glUniformMatrix4fv(skyboxProjLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    skybox->draw();
-    //if (nightShift == DAY) skybox->draw(DAY);
-    //else skybox->draw(NIGHT);
-    //glDepthMask(GL_TRUE);
+    //skybox->draw();
+    if (nightShift == DAY) skybox->draw(DAY);
+    else skybox->draw(NIGHT);
+    glDepthMask(GL_TRUE);
     // sun/moon
     glUseProgram(objectProgram);
     objectProjectionLoc = glGetUniformLocation(objectProgram, "projection");
@@ -294,6 +298,7 @@ void Window::displayCallback(GLFWwindow* window)
     objectModelLoc = glGetUniformLocation(objectProgram, "model");
     objectColorLoc = glGetUniformLocation(objectProgram, "color");
     
+    if (nightShift){
     glm::mat4 objectModel = sun->getModel();
     glm::vec3 objectColor = sun->getColor();
     glUniformMatrix4fv(objectProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -301,14 +306,16 @@ void Window::displayCallback(GLFWwindow* window)
     glUniformMatrix4fv(objectModelLoc, 1, GL_FALSE, glm::value_ptr(objectModel));
     glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
     sun->draw();
-    objectModel = moon->getModel();
-    objectColor = moon->getColor();
+    }
+    else {
+    glm::mat4 objectModel = moon->getModel();
+    glm::vec3 objectColor = moon->getColor();
     glUniformMatrix4fv(objectProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(objectViewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(objectModelLoc, 1, GL_FALSE, glm::value_ptr(objectModel));
     glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
     moon->draw();
-
+    }
     // for clouds
     glUseProgram(cloudsProgram);
     // Get the locations of uniform variables.
@@ -316,12 +323,14 @@ void Window::displayCallback(GLFWwindow* window)
     cloudsViewLoc = glGetUniformLocation(cloudsProgram, "view");
     cloudsModelLoc = glGetUniformLocation(cloudsProgram, "model");
     cloudsdLoc = glGetUniformLocation(cloudsProgram, "d");
-    
+    cloudsNSLoc = glGetUniformLocation(cloudsProgram, "nightShift");
+
     glm::mat4 cloudsModel = clouds->getModel();
     glUniformMatrix4fv(cloudsProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(cloudsViewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(cloudsModelLoc, 1, GL_FALSE, glm::value_ptr(cloudsModel));
     glUniform1f(cloudsdLoc, 0.01f);
+    glUniform1i(cloudsNSLoc, nightShift);
     clouds->draw();
     
     // Activate the shader program.
@@ -332,6 +341,8 @@ void Window::displayCallback(GLFWwindow* window)
     oceanModelLoc = glGetUniformLocation(oceanProgram, "model");
     oceanCamLoc = glGetUniformLocation(oceanProgram, "cameraPos");
     oceanXRotLoc = glGetUniformLocation(oceanProgram, "xRot");
+    oceanNSLoc = glGetUniformLocation(oceanProgram, "nightShift");
+
     // materials
     diffuseLoc = glGetUniformLocation(oceanProgram, "material.diffuse");
     specularLoc = glGetUniformLocation(oceanProgram, "material.specular");
@@ -340,7 +351,7 @@ void Window::displayCallback(GLFWwindow* window)
     glUniform3fv(diffuseLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
     glUniform3fv(specularLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
     glUniform3fv(ambientLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
-    glUniform1f(shininessLoc, 50.0f);
+    glUniform1f(shininessLoc, 70.0f);
     // point light
     ptLightColorLoc = glGetUniformLocation(oceanProgram, "pointLight.color");
     ptLightPosLoc = glGetUniformLocation(oceanProgram, "pointLight.position");
@@ -354,18 +365,19 @@ void Window::displayCallback(GLFWwindow* window)
     glUniform3fv(ptLightPosLoc, 1, glm::value_ptr(ptLightPosition));
     
 	glm::mat4 model = glm::mat4(1.0f);
-    float xRot = skybox->getXRot();
-    // float xRot = 0.0f;
+    // float xRot = skybox->getXRot();
+    float xRot = 0.0f;
 	glUniformMatrix4fv(oceanProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(oceanViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(oceanModelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(oceanCamLoc, 1, GL_FALSE, glm::value_ptr(eye));
     glUniform1f(oceanXRotLoc, xRot);
+    glUniform1i(oceanNSLoc, nightShift);
 
 	// Render the object.
-    GLuint skyTex = skybox -> getTextureID();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, skyTex);
+    // GLuint skyTex = skybox -> getTextureID();
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, skyTex);
     plane->draw();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -373,7 +385,7 @@ void Window::displayCallback(GLFWwindow* window)
     // ----------------------------- blurring ------------------------------
     
     bool horizontal = true, first_iteration = true;
-    unsigned int amount = 10;
+    unsigned int amount = 70;
     glUseProgram(blurProgram);
     for (unsigned int i = 0; i < amount; i++)
     {
@@ -548,6 +560,7 @@ void Window::enableBloom() {
     {
         glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+        // !!!!!!!!!!!!!!!!!!!!1
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

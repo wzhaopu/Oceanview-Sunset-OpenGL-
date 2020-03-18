@@ -178,7 +178,6 @@ void Skydome::draw(){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glBindVertexArray(vao);
-    // glBindTexture(GL_TEXTURE_3D, noiseTexture);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }

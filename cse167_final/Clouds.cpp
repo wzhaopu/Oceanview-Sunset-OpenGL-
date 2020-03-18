@@ -184,7 +184,7 @@ void Clouds::parseFile() {
 
 void Clouds::draw(){
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, noiseTexture);
+    glBindTexture(GL_TEXTURE_3D, noiseTexture);
     glBindVertexArray(vao);
     // glBindTexture(GL_TEXTURE_3D, noiseTexture);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -193,7 +193,7 @@ void Clouds::draw(){
 
 void Clouds::update(GLuint dLoc){
     model = glm::rotate(glm::mat4(1), glm::radians(0.01f), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
-    model = glm::rotate(glm::mat4(1), glm::radians(0.005f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
+    model = glm::rotate(glm::mat4(1), glm::radians(0.002f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
     depth += 0.00005f;
     if (depth >= 0.99f) depth = 0.01f; // wrap-around when we get to the end of the texture map
     glUniform1f(dLoc, depth);
