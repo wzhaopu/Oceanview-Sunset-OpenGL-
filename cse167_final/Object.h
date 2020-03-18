@@ -32,6 +32,7 @@ public:
     void rotate();
     void scale(glm::vec3 scaleVec);
     void translate(glm::vec3 transVec);
+    void rotate(float deg, glm::vec3 dir);
 
 };
 

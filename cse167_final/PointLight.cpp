@@ -35,3 +35,9 @@ glm::vec3 PointLight::getPosition()
 {
     return position;
 }
+
+void PointLight::rotate(float deg, glm::vec3 dir)
+{
+    toWorld = glm::rotate(glm::mat4(1), glm::radians(deg), dir) * toWorld;
+
+}

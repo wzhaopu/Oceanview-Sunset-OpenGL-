@@ -123,3 +123,8 @@ void Object::translate(glm::vec3 transVec)
 {
     model = glm::translate(glm::mat4(1.0f), transVec) * model;
 }
+
+void Object::rotate(float deg, glm::vec3 dir)
+{
+    model = glm::rotate(glm::mat4(1), glm::radians(deg), dir) * model;
+}

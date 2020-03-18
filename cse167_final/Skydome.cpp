@@ -189,6 +189,7 @@ void Skydome::update(){
     model = glm::rotate(glm::mat4(1), glm::radians(0.05f), glm::vec3(1.0f, 0.0f, 0.0f)) * model;
         // model = glm::rotate(glm::mat4(1), glm::radians(0.0005f), glm::vec3(0.0f, 0.0f, 1.0f)) * model;
     xRot += 0.05f;
+    if (xRot == 360.0f) xRot = 0.0f;
 
 
 }

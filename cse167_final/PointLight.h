@@ -32,5 +32,6 @@ public:
     glm::mat4 getToWorld();
     glm::vec3 getColor();
     glm::vec3 getPosition();
+    void rotate(float deg, glm::vec3 dir);
 };
 #endif /* PointLight_hpp */
