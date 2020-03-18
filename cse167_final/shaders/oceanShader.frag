@@ -93,7 +93,7 @@ void main()
     // --------------- edit -----------------
     vec3 viewDir = normalize(cameraPos - Position);
     vec3 norm = normalize(Normal);
-    vec3 sunResult = oceanColor.rgb * CalcPointLight(sunPtLight, norm, Position, viewDir, 0.0015f);
+    vec3 sunResult = oceanColor.rgb * CalcPointLight(sunPtLight, norm, Position, viewDir, 0.005f);
     vec3 moonResult = oceanColor.rgb * CalcPointLight(moonPtLight, norm, Position, viewDir, 0.1f);
     vec3 lightResult = sunResult;
     FragColor = vec4(lightResult, 1.0f);

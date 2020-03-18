@@ -42,5 +42,6 @@ public:
     ~WaveCalculator();
     glm::vec3 getPosition(glm::vec2 position, float time);
     glm::vec3 getNormal(glm::vec3 position, float time);
+    void setWaveNum(int num);
 };
 #endif /* WaveCalculator_hpp */

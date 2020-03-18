@@ -37,9 +37,9 @@ WaveCalculator::WaveCalculator(int num) {
     waves[4].frequency = 0.5f;
     waves[4].speed = 0.52f;
     waves[5].direction = {-0.4f, -0.6f};
-    waves[5].amplitude = 0.3f;
-    waves[5].steepness = 0.3f;
-    waves[5].frequency = 0.3f;
+    waves[5].amplitude = 1.0f;
+    waves[5].steepness = 1.0f;
+    waves[5].frequency = 0.1f;
     waves[5].speed = 0.2f;
 }
 
@@ -77,4 +77,6 @@ glm::vec3 WaveCalculator::getNormal(glm::vec3 position, float time) {
     return normal;
 }
 
-
+void WaveCalculator::setWaveNum(int num) {
+    waveNum = num;
+}

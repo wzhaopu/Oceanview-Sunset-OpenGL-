@@ -10,7 +10,10 @@
 #define MOON 0
 namespace
 {
+    int waveNum = 4;
+    int clouds_on = 1;
     int bloom = 1;
+    int mesh_on = 0;
     float exposure = 0.1f;
     unsigned int quadVAO = 0;
     unsigned int quadVBO;
@@ -147,7 +150,7 @@ bool Window::initializeObjects()
 
     skybox = new Skybox();
     clouds = new Clouds();
-    wave = new WaveCalculator(4);
+    wave = new WaveCalculator(waveNum);
     plane = new OceanMesh(300.0f, 0.0f, 300, wave);
     start = std::clock();
     sunPtLight = new PointLight(glm::vec3(255.0f/255.0f, 214.0f/255.0f, 170.0f/255.0f), glm::vec3(0, 30, -100));
@@ -317,6 +320,7 @@ void Window::displayCallback(GLFWwindow* window)
     moon->draw();
     }
     // for clouds
+    if (clouds_on) {
     glUseProgram(cloudsProgram);
     // Get the locations of uniform variables.
     cloudsProjectionLoc = glGetUniformLocation(cloudsProgram, "projection");
@@ -332,7 +336,7 @@ void Window::displayCallback(GLFWwindow* window)
     glUniform1f(cloudsdLoc, 0.01f);
     glUniform1i(cloudsNSLoc, nightShift);
     clouds->draw();
-    
+    }
     // Activate the shader program.
     glUseProgram(oceanProgram);
     // Get the locations of uniform variables.
@@ -348,13 +352,13 @@ void Window::displayCallback(GLFWwindow* window)
     specularLoc = glGetUniformLocation(oceanProgram, "material.specular");
     ambientLoc = glGetUniformLocation(oceanProgram, "material.ambient");
     shininessLoc = glGetUniformLocation(oceanProgram, "material.shininess");
-    glUniform3fv(diffuseLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
+    glUniform3fv(diffuseLoc, 1, glm::value_ptr(glm::vec3(0.1f)));
     glUniform3fv(specularLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-    glUniform3fv(ambientLoc, 1, glm::value_ptr(glm::vec3(0.2f)));
-    glUniform1f(shininessLoc, 70.0f);
+    glUniform3fv(ambientLoc, 1, glm::value_ptr(glm::vec3(0.1f)));
+    glUniform1f(shininessLoc, 50.0f);
     // point light
-    ptLightColorLoc = glGetUniformLocation(oceanProgram, "pointLight.color");
-    ptLightPosLoc = glGetUniformLocation(oceanProgram, "pointLight.position");
+    ptLightColorLoc = glGetUniformLocation(oceanProgram, "sunPtLight.color");
+    ptLightPosLoc = glGetUniformLocation(oceanProgram, "sunPtLight.position");
     glm::mat4 ptLight2World = sunPtLight->getToWorld();
     glm::vec3 ptLightPosition = view * ptLight2World * glm::vec4(sunPtLight->getPosition(), 1.0f);
     glUniform3fv(ptLightColorLoc, 1, glm::value_ptr(sunPtLight->getColor()));
@@ -378,8 +382,10 @@ void Window::displayCallback(GLFWwindow* window)
     // GLuint skyTex = skybox -> getTextureID();
     // glActiveTexture(GL_TEXTURE0);
     // glBindTexture(GL_TEXTURE_2D, skyTex);
+    if (mesh_on)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     plane->draw();
-
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // ----------------------------- blurring ------------------------------
@@ -450,6 +456,18 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
         case GLFW_KEY_R:
             delete(clouds);
             clouds = new Clouds();
+            break;
+        case GLFW_KEY_C:
+            clouds_on = !clouds_on;
+            break;
+        case GLFW_KEY_M:
+            mesh_on = !mesh_on;
+            break;
+        case GLFW_KEY_LEFT_BRACKET:
+            if (waveNum > 0) wave->setWaveNum(--waveNum);
+            break;
+        case GLFW_KEY_RIGHT_BRACKET:
+            if (waveNum < 6) wave->setWaveNum(++waveNum);
             break;
 		default:
 			break;

@@ -100,9 +100,6 @@ void OceanMesh::generate() {
 
 void OceanMesh::draw() {
     glBindVertexArray(vao);
-    // glPointSize(3.0f);
-    // glDrawArrays(GL_POINTS, 0, vertices.size());
-    // glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
